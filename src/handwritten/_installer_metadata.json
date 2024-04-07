@@ -18,7 +18,7 @@
             "Location": "https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2024Q1/NILinux2024Q1DeviceDrivers.zip",
             "supportedOS": [
                 "ubuntu 20.04",
-                "ubuntu 22.00",
+                "ubuntu 22.04",
                 "rhel 8",
                 "rhel 9",
                 "opensuse 15.4",
