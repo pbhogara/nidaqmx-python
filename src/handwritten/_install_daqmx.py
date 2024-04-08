@@ -135,7 +135,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
             _logger.info("Failed to get installed NI-DAQmx version.", exc_info=True)
             raise click.ClickException(
                 f"An error occurred while getting the installed NI-DAQmx version.\nCommand returned non-zero exit status '{e.returncode}'."
-            ) from e+
+            ) from e
     else:
         raise NotImplementedError("This function is only supported on Windows and Linux.")
 
