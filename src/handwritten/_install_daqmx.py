@@ -283,7 +283,7 @@ def _install_daqmx_driver(download_url: str) -> None:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(f"Failed to install the NI-DAQmx driver.\nDetails: {e}") from e
 
-def _install_daqmx_driver_linux(download_url: str) -> None:
+def _install_daqmx_driver_linux(download_url: str, dist_name: str) -> None:
     try:
         with _multi_access_temp_file(suffix=".zip") as temp_file:
             _logger.info("Downloading Driver to %s", temp_file)
@@ -335,7 +335,7 @@ def _ask_user_confirmation(user_message: str) -> bool:
 
 
 def _confirm_and_upgrade_daqmx_driver(
-    latest_version: str, installed_version: str, download_url: str
+    latest_version: str, installed_version: str, download_url: str, dist_name: Optional[str]
 ) -> None:
     """
     Confirm with the user and upgrade the NI-DAQmx driver if necessary.
@@ -356,7 +356,7 @@ def _confirm_and_upgrade_daqmx_driver(
         if sys.platform.startswith("win"):
             _install_daqmx_driver(download_url)
         elif sys.platform == "linux":
-            _install_daqmx_driver_linux(download_url)
+            _install_daqmx_driver_linux(download_url, dist_name)
 
 
 def _install_daqmx_windows_driver() -> None:
@@ -400,9 +400,9 @@ def _install_daqmx_linux_driver() -> None:
         raise click.ClickException(f"Failed to fetch the download url.")
     else:
         if installed_version and latest_version:
-            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url)
+            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, dist_name)
         else:
-            _install_daqmx_driver_linux(download_url)
+            _install_daqmx_driver_linux(download_url, dist_name)
 
 def installdriver() -> None:
     """
