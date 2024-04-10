@@ -33,7 +33,7 @@ def _get_ubuntu_installation_commands(_directory_to_extract_to: str) -> List[Lis
                             ['sudo', 'apt', 'install', f'{_directory_to_extract_to}/NILinux2024Q1DeviceDrivers/ni-ubuntu2004-drivers-2024Q1.deb'],
                             ['sudo', 'apt', 'update'],
                             ['sudo', 'apt', 'install', 'ni-daqmx'],
-                            ['sudo', 'apt', 'install', 'ni-hwcfg-utility'],
+                            #['sudo', 'apt', 'install', 'ni-hwcfg-utility'],
                             ['sudo', 'dkms', 'autoinstall']
                     ]
     return UBUNTU_COMMANDS
@@ -272,7 +272,7 @@ def _install_daqmx_driver(download_url: str) -> None:
             _logger.info("Installing NI-DAQmx")
             subprocess.run([temp_file], shell=True, check=True)
     except subprocess.CalledProcessError as e:
-        _logger.info("Failed to installed NI-DAQmx driver.", exc_info=True)
+        _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(
             f"An error occurred while installing the NI-DAQmx driver. Command returned non-zero exit status '{e.returncode}'."
         ) from e
@@ -302,13 +302,13 @@ def _install_daqmx_driver_linux(download_url: str, dist_name: str) -> None:
                     for command in _get_ubuntu_installation_commands(_directory_to_extract_to):
                         subprocess.run(command, check=True)
                 elif dist_name == "opensuse":
-                    for command in OPENSUSE_COMMANDS:
+                    for command in _get_opensuse_installation_commands(_directory_to_extract_to):
                         subprocess.run(command, check=True)
                 elif dist_name == "redhat":
-                    for command in REDHAT_COMMANDS:
+                    for command in _get_redhat_installation_commands(_directory_to_extract_to):
                         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
-        _logger.info("Failed to installed NI-DAQmx driver.", exc_info=True)
+        _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(
             f"An error occurred while installing the NI-DAQmx driver. Command returned non-zero exit status '{e.returncode}'."
         ) from e
