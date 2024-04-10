@@ -399,7 +399,7 @@ def _install_daqmx_linux_driver() -> None:
 
     # Check if the platform is one of the supported ones
     if _dist_name_and_version in supported_os:
-        _logger.info(f"The platform is supported: {_dist_name_and_version}", exc_info=True)
+        _logger.info(f"The platform is supported: {_dist_name_and_version}")
     else:
         raise click.ClickException(f"The platform {_dist_name_and_version} is not supported.")
 
@@ -432,3 +432,5 @@ def installdriver() -> None:
         raise click.ClickException(
             f"An error occurred during the installation of the NI-DAQmx driver.\nDetails: {e}"
         ) from e
+
+sudo zypper install -y gcc make patch gdbm-devel openssl-devel sqlite3-devel readline-devel zlib-devel bzip2-devel libffi-devel
