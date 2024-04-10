@@ -42,7 +42,6 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
                                 #['sudo', 'apt', 'install', 'ni-hwcfg-utility'],
                                 ['sudo', 'dkms', 'autoinstall']
                             ]
-            return UBUNTU_COMMANDS
         return UBUNTU_COMMANDS
     
     elif dist_name == "opensuse":
@@ -74,7 +73,7 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
                                 ['sudo', 'dkms', 'autoinstall']
                             ]
         return REDHAT_COMMANDS
-        
+
     else:
         raise click.ClickException(f"Unsupported distribution '{dist_name}'")
 
