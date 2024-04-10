@@ -292,21 +292,21 @@ def _install_daqmx_driver_linux(download_url: str, dist_name: str) -> None:
             with _multi_access_temp_folder() as temp_folder:
                 _directory_to_extract_to = temp_folder
 
-            _logger.info("Unzipping the downloaded file to %s", _directory_to_extract_to)
+                _logger.info("Unzipping the downloaded file to %s", _directory_to_extract_to)
 
-            with zipfile.ZipFile(temp_file, 'r') as zip_ref:
-                zip_ref.extractall(_directory_to_extract_to)
+                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                    zip_ref.extractall(_directory_to_extract_to)
 
-            _logger.info("Installing NI-DAQmx")
-            if dist_name == "ubuntu":
-                for command in _get_ubuntu_installation_commands(_directory_to_extract_to):
-                    subprocess.run(command, check=True)
-            elif dist_name == "opensuse":
-                for command in OPENSUSE_COMMANDS:
-                    subprocess.run(command, check=True)
-            elif dist_name == "redhat":
-                for command in REDHAT_COMMANDS:
-                    subprocess.run(command, check=True)
+                _logger.info("Installing NI-DAQmx")
+                if dist_name == "ubuntu":
+                    for command in _get_ubuntu_installation_commands(_directory_to_extract_to):
+                        subprocess.run(command, check=True)
+                elif dist_name == "opensuse":
+                    for command in OPENSUSE_COMMANDS:
+                        subprocess.run(command, check=True)
+                elif dist_name == "redhat":
+                    for command in REDHAT_COMMANDS:
+                        subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         _logger.info("Failed to installed NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(
