@@ -377,7 +377,7 @@ def _confirm_and_upgrade_daqmx_driver(
         if sys.platform.startswith("win"):
             _install_daqmx_driver(download_url)
         elif sys.platform == "linux":
-            _install_daqmx_driver_linux(download_url, dist_name)
+            _install_daqmx_driver_linux(download_url, dist_name, distro.version())
 
 
 def _install_daqmx_windows_driver() -> None:

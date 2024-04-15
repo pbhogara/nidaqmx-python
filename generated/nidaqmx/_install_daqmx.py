@@ -159,7 +159,6 @@ def _get_daqmx_installed_version() -> Optional[str]:
             else:
                 raise click.ClickException(f"Unsupported distribution '{distro.id()}'")
 
-
         except subprocess.CalledProcessError as e:
             _logger.info("Failed to get installed NI-DAQmx version.", exc_info=True)
             raise click.ClickException(
@@ -378,7 +377,7 @@ def _confirm_and_upgrade_daqmx_driver(
         if sys.platform.startswith("win"):
             _install_daqmx_driver(download_url)
         elif sys.platform == "linux":
-            _install_daqmx_driver_linux(download_url, dist_name)
+            _install_daqmx_driver_linux(download_url, dist_name, distro.version())
 
 
 def _install_daqmx_windows_driver() -> None:
