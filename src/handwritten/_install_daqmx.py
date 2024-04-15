@@ -27,6 +27,7 @@ _logger = logging.getLogger(__name__)
 METADATA_FILE = "_installer_metadata.json"
 
 def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: str, dist_version: str) -> List[List[str]]:
+    _release_string = "2024Q1"
     if dist_name == "ubuntu":
         if dist_version == "20.04":
             _version = "2004"
@@ -36,7 +37,7 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
             raise click.ClickException(f"Unsupported version '{dist_version}'")
         UBUNTU_COMMANDS =  [
                                 ['sudo', 'apt', 'update'],
-                                ['sudo', 'apt', 'install', f'{_directory_to_extract_to}/NILinux2024Q1DeviceDrivers/ni-ubuntu{_version}-drivers-2024Q1.deb'],
+                                ['sudo', 'apt', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-ubuntu{_version}-drivers-{_release_string}.deb'],
                                 ['sudo', 'apt', 'update'],
                                 ['sudo', 'apt', 'install', 'ni-daqmx'],
                                 #['sudo', 'apt', 'install', 'ni-hwcfg-utility'],
@@ -55,7 +56,7 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
         OPENSUSE_COMMANDS = [
                                 ['sudo', 'zypper', 'update'],
                                 ['sudo', 'zypper', 'install', 'insserv'],
-                                ['sudo', 'zypper', '--no-gpg-checks', 'install', f'{_directory_to_extract_to}/NILinux2024Q1DeviceDrivers/ni-opensuse{_version}-drivers-2024Q1.rpm'],
+                                ['sudo', 'zypper', '--no-gpg-checks', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-opensuse{_version}-drivers-{_release_string}.rpm'],
                                 ['sudo', 'zypper', 'refresh'],
                                 ['sudo', 'zypper', 'install', 'ni-daqmx'],
                                 #['sudo', 'zypper', 'install', 'ni-hwcfg-utility'],
@@ -67,7 +68,7 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
         REDHAT_COMMANDS =   [
                                 ['sudo', 'yum', 'update'],
                                 ['sudo', 'yum', 'install', 'chkconfig'],
-                                ['sudo', 'yum', 'install', f'{_directory_to_extract_to}/NILinux2024Q1DeviceDrivers/ni-rfhel8-drivers-2024Q1.rpm'],
+                                ['sudo', 'yum', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-rfhel8-drivers-{_release_string}.rpm'],
                                 ['sudo', 'yum', 'install', 'ni-daqmx'],
                                 #['sudo', 'yum', 'install', 'ni-hwcfg-utility'],
                                 ['sudo', 'dkms', 'autoinstall']
@@ -140,7 +141,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
             _logger.debug("Checking for installed NI-DAQmx version")
             if distro.id() == "ubuntu":
                 daqmx_version = subprocess.run(
-                    ["dpkg", "-l", "ni-daqmx"], stdout=subprocess.PIPE, check=True
+                    ["dpkg", "-l", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
                 _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
                 version_match = re.search(r"ii\s+ni-daqmx\s+(\d+\.\d+\.\d+)", daqmx_version)
@@ -149,7 +150,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
                 return None
             elif distro.id() == "opensuse" or distro.id() == "redhat":
                 daqmx_version = subprocess.run(
-                    ["rpm", "-q", "ni-daqmx"], stdout=subprocess.PIPE, check=True
+                    ["rpm", "-q", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
                 _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
                 version_match = re.search(r"ni-daqmx-(\d+\.\d+\.\d+)", daqmx_version)
