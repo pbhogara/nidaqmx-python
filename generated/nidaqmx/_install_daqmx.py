@@ -152,7 +152,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
             else:
                 raise click.ClickException(f"Unsupported distribution '{distro.id()}'")
             if version_match:
-                _logger.debug("Found installed NI-DAQmx version: %s", version_match)
+                _logger.debug("Found installed NI-DAQmx version: %s", version_match.group(1))
                 return version_match.group(1)
             else:
                 _logger.debug("No installed NI-DAQmx version found.")
