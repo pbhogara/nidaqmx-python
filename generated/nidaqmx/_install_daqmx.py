@@ -140,19 +140,19 @@ def _get_daqmx_installed_version() -> Optional[str]:
         try:
             _logger.debug("Checking for installed NI-DAQmx version")
             if distro.id() == "ubuntu":
-                daqmx_version = subprocess.run(
+                dpkg_output = subprocess.run(
                     ["dpkg", "-l", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
-                version_match = re.search(r"ii\s+ni-daqmx\s+(\d+\.\d+\.\d+)", daqmx_version)
+                version_match = re.search(r"ii\s+ni-daqmx\s+(\d+\.\d+\.\d+)", dpkg_output)
             elif distro.id() == "opensuse" or distro.id() == "redhat":
-                daqmx_version = subprocess.run(
+                rpm_output = subprocess.run(
                     ["rpm", "-q", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
-                version_match = re.search(r"ni-daqmx-(\d+\.\d+\.\d+)", daqmx_version)
+                version_match = re.search(r"ni-daqmx-(\d+\.\d+\.\d+)", rpm_output)
             else:
                 raise click.ClickException(f"Unsupported distribution '{distro.id()}'")
             if version_match:
-                _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
+                _logger.debug("Found installed NI-DAQmx version: %s", version_match)
                 return version_match.group(1)
             else:
                 _logger.debug("No installed NI-DAQmx version found.")
@@ -408,7 +408,7 @@ def _is_distribution_supported() -> None:
 
     # Check if the platform is one of the supported ones
     if _dist_name_and_version in supported_os:
-        _logger.info(f"The platform is supported: {_dist_name_and_version}", exc_info=True)
+        _logger.info(f"The platform is supported: {_dist_name_and_version}")
     else:
         raise click.ClickException(f"The platform {_dist_name_and_version} is not supported.")
 
