@@ -143,22 +143,21 @@ def _get_daqmx_installed_version() -> Optional[str]:
                 daqmx_version = subprocess.run(
                     ["dpkg", "-l", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
-                _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
                 version_match = re.search(r"ii\s+ni-daqmx\s+(\d+\.\d+\.\d+)", daqmx_version)
-                if version_match:
-                    return version_match.group(1)
-                return None
             elif distro.id() == "opensuse" or distro.id() == "redhat":
                 daqmx_version = subprocess.run(
                     ["rpm", "-q", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
-                _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
                 version_match = re.search(r"ni-daqmx-(\d+\.\d+\.\d+)", daqmx_version)
-                if version_match:
-                    return version_match.group(1)
-                return None
             else:
                 raise click.ClickException(f"Unsupported distribution '{distro.id()}'")
+            if version_match:
+                _logger.debug("Found installed NI-DAQmx version: %s", daqmx_version)
+                return version_match.group(1)
+            else:
+                _logger.debug("No installed NI-DAQmx version found.")
+                return None
+            
 
         except subprocess.CalledProcessError as e:
             _logger.info("Failed to get installed NI-DAQmx version.", exc_info=True)
@@ -396,18 +395,14 @@ def _install_daqmx_windows_driver() -> None:
         else:
             _install_daqmx_driver(download_url)
 
-def _install_daqmx_linux_driver() -> None:
+def _is_distribution_supported() -> None:
     """
-    Install the NI-DAQmx driver on Linux.
+    Check if the distribution is supported
 
     """
     dist_name = distro.id()
     dist_version = distro.version()
-    _dist_name_and_version = dist_name + " " + dist_version
-
-
-    # Get installed version of ni-daqmx
-    installed_version = _get_daqmx_installed_version()
+    _dist_name_and_version = dist_name + " " + dist_version    
 
     download_url, latest_version, supported_os = _get_driver_details("Linux")
 
@@ -417,13 +412,27 @@ def _install_daqmx_linux_driver() -> None:
     else:
         raise click.ClickException(f"The platform {_dist_name_and_version} is not supported.")
 
+def _install_daqmx_linux_driver() -> None:
+    """
+    Install the NI-DAQmx driver on Linux.
+
+    """
+    
+    installed_version = _get_daqmx_installed_version()
+    download_url, latest_version, supported_os = _get_driver_details("Linux")
+
+    try:
+        _is_distribution_supported()
+    except Exception as e:
+        raise click.ClickException(f"Distribution not supported.\nDetails: {e}") from e
+
     if not download_url:
         raise click.ClickException(f"Failed to fetch the download url.")
     else:
         if installed_version and latest_version:
-            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, dist_name)
+            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, distro.name())
         else:
-            _install_daqmx_driver_linux(download_url, dist_name, dist_version)
+            _install_daqmx_driver_linux(download_url, distro.id(), distro.version())
 
 def installdriver() -> None:
     """
