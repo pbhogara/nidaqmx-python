@@ -64,11 +64,20 @@ def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: s
                             ]
         return OPENSUSE_COMMANDS
     
-    elif dist_name == "redhat":
+    elif dist_name == "rhel":
+        # check if dist_version starts with 8 like 8.6 or 8.8
+        if dist_version.startswith("8"):
+            _version = "8"
+        # check if dist_version starts with 7 like 7.8 or 7.6
+        elif dist_version.startswith("9"):
+            _version = "9"
+        else:
+            raise click.ClickException(f"Unsupported version '{dist_version}'")
+        
         REDHAT_COMMANDS =   [
                                 ['sudo', 'yum', 'update'],
                                 ['sudo', 'yum', 'install', 'chkconfig'],
-                                ['sudo', 'yum', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-rfhel8-drivers-{_release_string}.rpm'],
+                                ['sudo', 'yum', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-rhel{_version}-drivers-{_release_string}.rpm'],
                                 ['sudo', 'yum', 'install', 'ni-daqmx'],
                                 #['sudo', 'yum', 'install', 'ni-hwcfg-utility'],
                                 ['sudo', 'dkms', 'autoinstall']
