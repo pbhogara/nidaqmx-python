@@ -411,6 +411,10 @@ def _is_distribution_supported() -> None:
     """
     dist_name = distro.id()
     dist_version = distro.version()
+
+    # For rhel, we only need the major version
+    if dist_name == "rhel":
+        dist_version = dist_version.split(".")[0]
     _dist_name_and_version = dist_name + " " + dist_version    
 
     download_url, latest_version, supported_os = _get_driver_details("Linux")
