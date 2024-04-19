@@ -153,7 +153,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
                     ["dpkg", "-l", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
                 version_match = re.search(r"ii\s+ni-daqmx\s+(\d+\.\d+\.\d+)", dpkg_output)
-            elif distro.id() == "opensuse" or distro.id() == "redhat":
+            elif distro.id() == "opensuse" or distro.id() == "rhel":
                 rpm_output = subprocess.run(
                     ["rpm", "-q", "ni-daqmx"], stdout=subprocess.PIPE
                 ).stdout.decode("utf-8")
