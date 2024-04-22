@@ -443,7 +443,7 @@ def _install_daqmx_linux_driver() -> None:
         raise click.ClickException(f"Failed to fetch the download url.")
     else:
         if installed_version and latest_version:
-            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, distro.name())
+            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, distro.id())
         else:
             _install_daqmx_driver_linux(download_url, distro.id(), distro.version())
 
