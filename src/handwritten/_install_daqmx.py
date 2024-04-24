@@ -26,43 +26,63 @@ _logger = logging.getLogger(__name__)
 
 METADATA_FILE = "_installer_metadata.json"
 
-def _get_linux_installation_commands(_directory_to_extract_to: str, dist_name: str, dist_version: str, _release_string: str) -> List[List[str]]:
+
+def _get_linux_installation_commands(
+    _directory_to_extract_to: str, dist_name: str, dist_version: str, _release_string: str
+) -> List[List[str]]:
     if dist_name == "ubuntu":
         # Remove "." from dist_version string. 20.04 -> 2004
         _dist_version = dist_version.replace(".", "")
-        UBUNTU_COMMANDS =  [
-                                ['sudo', 'apt', 'update'],
-                                ['sudo', 'apt', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-ubuntu{_dist_version}-drivers-{_release_string}.deb'],
-                                ['sudo', 'apt', 'update'],
-                                ['sudo', 'apt', 'install', 'ni-daqmx'],
-                                ['sudo', 'dkms', 'autoinstall']
-                            ]
+        UBUNTU_COMMANDS = [
+            ["sudo", "apt", "update"],
+            [
+                "sudo",
+                "apt",
+                "install",
+                f"{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-ubuntu{_dist_version}-drivers-{_release_string}.deb",
+            ],
+            ["sudo", "apt", "update"],
+            ["sudo", "apt", "install", "ni-daqmx"],
+            ["sudo", "dkms", "autoinstall"],
+        ]
         return UBUNTU_COMMANDS
     elif dist_name == "opensuse":
         _dist_version = dist_version.replace(".", "")
         OPENSUSE_COMMANDS = [
-                                ['sudo', 'zypper', 'update'],
-                                ['sudo', 'zypper', 'install', 'insserv'],
-                                ['sudo', 'zypper', '--no-gpg-checks', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-opensuse{_dist_version}-drivers-{_release_string}.rpm'],
-                                ['sudo', 'zypper', 'refresh'],
-                                ['sudo', 'zypper', 'install', 'ni-daqmx'],
-                                ['sudo', 'dkms', 'autoinstall']
-                            ]
+            ["sudo", "zypper", "update"],
+            ["sudo", "zypper", "install", "insserv"],
+            [
+                "sudo",
+                "zypper",
+                "--no-gpg-checks",
+                "install",
+                f"{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-opensuse{_dist_version}-drivers-{_release_string}.rpm",
+            ],
+            ["sudo", "zypper", "refresh"],
+            ["sudo", "zypper", "install", "ni-daqmx"],
+            ["sudo", "dkms", "autoinstall"],
+        ]
         return OPENSUSE_COMMANDS
     elif dist_name == "rhel":
         # Only the major version is needed for  8.8 -> 8 or 9.2 -> 9
         _dist_version = dist_version.split(".")[0]
-        REDHAT_COMMANDS =   [
-                                ['sudo', 'yum', 'update'],
-                                ['sudo', 'yum', 'install', 'chkconfig'],
-                                ['sudo', 'yum', 'install', f'{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-rhel{_dist_version}-drivers-{_release_string}.rpm'],
-                                ['sudo', 'yum', 'install', 'ni-daqmx'],
-                                ['sudo', 'dkms', 'autoinstall']
-                            ]
+        REDHAT_COMMANDS = [
+            ["sudo", "yum", "update"],
+            ["sudo", "yum", "install", "chkconfig"],
+            [
+                "sudo",
+                "yum",
+                "install",
+                f"{_directory_to_extract_to}/NILinux{_release_string}DeviceDrivers/ni-rhel{_dist_version}-drivers-{_release_string}.rpm",
+            ],
+            ["sudo", "yum", "install", "ni-daqmx"],
+            ["sudo", "dkms", "autoinstall"],
+        ]
         return REDHAT_COMMANDS
 
     else:
         raise click.ClickException(f"Unsupported distribution '{dist_name}'")
+
 
 def _parse_version(version: str) -> Tuple[int, ...]:
     """
@@ -143,7 +163,6 @@ def _get_daqmx_installed_version() -> Optional[str]:
             else:
                 _logger.debug("No installed NI-DAQmx version found.")
                 return None
-            
 
         except subprocess.CalledProcessError as e:
             _logger.info("Failed to get installed NI-DAQmx version.", exc_info=True)
@@ -186,6 +205,7 @@ def _multi_access_temp_file(
                     f"Failed to delete temporary file '{temp_file.name}'.\nDetails: {e}"
                 ) from e
 
+
 @contextlib.contextmanager
 def _multi_access_temp_folder(*, delete: bool = True) -> Generator[str, None, None]:
     """
@@ -210,11 +230,14 @@ def _multi_access_temp_folder(*, delete: bool = True) -> Generator[str, None, No
                 shutil.rmtree(temp_folder.name)
             except ValueError as e:
                 _logger.info("Failed to delete temporary file.", exc_info=True)
-                raise click.ClickException(f"Failed to delete temporary folder '{temp_folder.name}'.\nDetails: {e}") from e
+                raise click.ClickException(
+                    f"Failed to delete temporary folder '{temp_folder.name}'.\nDetails: {e}"
+                ) from e
 
 
-
-def _load_data(json_data: str, platform: str) -> Tuple[Optional[str], Optional[str], Optional[List[str]]]:
+def _load_data(
+    json_data: str, platform: str
+) -> Tuple[Optional[str], Optional[str], Optional[List[str]]]:
     """
     Load data from JSON string and extract Windows metadata.
 
@@ -233,9 +256,9 @@ def _load_data(json_data: str, platform: str) -> Tuple[Optional[str], Optional[s
 
     """
     try:
-        if (platform == "Windows"):
+        if platform == "Windows":
             metadata = json.loads(json_data).get("Windows", [])
-        elif (platform == "Linux"):
+        elif platform == "Linux":
             metadata = json.loads(json_data).get("Linux", [])
         else:
             raise click.ClickException(f"Unsupported os '{platform}'")
@@ -298,6 +321,7 @@ def _install_daqmx_driver_windows(download_url: str) -> None:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(f"Failed to install the NI-DAQmx driver.\nDetails: {e}") from e
 
+
 def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
     try:
         with _multi_access_temp_file(suffix=".zip") as temp_file:
@@ -309,11 +333,13 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
 
                 _logger.info("Unzipping the downloaded file to %s", _directory_to_extract_to)
 
-                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file, "r") as zip_ref:
                     zip_ref.extractall(_directory_to_extract_to)
 
-                _logger.info("Installing NI-DAQmx")             
-                for command in _get_linux_installation_commands(_directory_to_extract_to, distro.id(), distro.version(), release):
+                _logger.info("Installing NI-DAQmx")
+                for command in _get_linux_installation_commands(
+                    _directory_to_extract_to, distro.id(), distro.version(), release
+                ):
                     subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
@@ -326,6 +352,7 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
     except Exception as e:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(f"Failed to install the NI-DAQmx driver.\nDetails: {e}") from e
+
 
 def _ask_user_confirmation(user_message: str) -> bool:
     """
@@ -343,7 +370,11 @@ def _ask_user_confirmation(user_message: str) -> bool:
 
 
 def _confirm_and_upgrade_daqmx_driver(
-    latest_version: str, installed_version: str, download_url: str, dist_name: Optional[str], release: str
+    latest_version: str,
+    installed_version: str,
+    download_url: str,
+    dist_name: Optional[str],
+    release: str,
 ) -> None:
     """
     Confirm with the user and upgrade the NI-DAQmx driver if necessary.
@@ -378,9 +409,12 @@ def _install_daqmx_windows_driver() -> None:
         raise click.ClickException(f"Failed to fetch the download url.")
     else:
         if installed_version and latest_version:
-            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, release)
+            _confirm_and_upgrade_daqmx_driver(
+                latest_version, installed_version, download_url, release
+            )
         else:
             _install_daqmx_driver_windows(download_url)
+
 
 def _is_distribution_supported() -> None:
     """
@@ -393,7 +427,7 @@ def _is_distribution_supported() -> None:
     # For rhel, we only need the major version
     if dist_name == "rhel":
         dist_version = dist_version.split(".")[0]
-    _dist_name_and_version = dist_name + " " + dist_version    
+    _dist_name_and_version = dist_name + " " + dist_version
 
     download_url, latest_version, release, supported_os = _get_driver_details("Linux")
 
@@ -403,12 +437,13 @@ def _is_distribution_supported() -> None:
     else:
         raise click.ClickException(f"The platform {_dist_name_and_version} is not supported.")
 
+
 def _install_daqmx_linux_driver() -> None:
     """
     Install the NI-DAQmx driver on Linux.
 
     """
-    
+
     installed_version = _get_daqmx_installed_version()
     download_url, latest_version, release, supported_os = _get_driver_details("Linux")
 
@@ -421,9 +456,12 @@ def _install_daqmx_linux_driver() -> None:
         raise click.ClickException(f"Failed to fetch the download url.")
     else:
         if installed_version and latest_version:
-            _confirm_and_upgrade_daqmx_driver(latest_version, installed_version, download_url, distro.id(), release)
+            _confirm_and_upgrade_daqmx_driver(
+                latest_version, installed_version, download_url, distro.id(), release
+            )
         else:
             _install_daqmx_driver_linux(download_url, release)
+
 
 def installdriver() -> None:
     """
@@ -438,7 +476,9 @@ def installdriver() -> None:
             _logger.info("Linux platform detected")
             _install_daqmx_linux_driver()
         else:
-            raise click.ClickException(f"The 'installdriver' command is supported only on Windows and Linux.")
+            raise click.ClickException(
+                f"The 'installdriver' command is supported only on Windows and Linux."
+            )
     except click.ClickException:
         raise
     except Exception as e:
