@@ -30,10 +30,14 @@ METADATA_FILE = "_installer_metadata.json"
 def _get_linux_installation_commands(
     _directory_to_extract_to: str, dist_name: str, dist_version: str, _release_string: str
 ) -> List[List[str]]:
+    """
+    Get the installation commands for Linux based on the distribution.
+
+    """
     if dist_name == "ubuntu":
         # Remove "." from dist_version string. 20.04 -> 2004
         _dist_version = dist_version.replace(".", "")
-        UBUNTU_COMMANDS = [
+        ubuntu_commands = [
             ["sudo", "apt", "update"],
             [
                 "sudo",
@@ -45,10 +49,10 @@ def _get_linux_installation_commands(
             ["sudo", "apt", "install", "ni-daqmx"],
             ["sudo", "dkms", "autoinstall"],
         ]
-        return UBUNTU_COMMANDS
+        return ubuntu_commands
     elif dist_name == "opensuse":
         _dist_version = dist_version.replace(".", "")
-        OPENSUSE_COMMANDS = [
+        opensuse_commands = [
             ["sudo", "zypper", "update"],
             ["sudo", "zypper", "install", "insserv"],
             [
@@ -62,11 +66,11 @@ def _get_linux_installation_commands(
             ["sudo", "zypper", "install", "ni-daqmx"],
             ["sudo", "dkms", "autoinstall"],
         ]
-        return OPENSUSE_COMMANDS
+        return opensuse_commands
     elif dist_name == "rhel":
-        # Only the major version is needed for  8.8 -> 8 or 9.2 -> 9
+        # Only the major version is needed for rhel. 8.8 -> 8 or 9.2 -> 9
         _dist_version = dist_version.split(".")[0]
-        REDHAT_COMMANDS = [
+        redhat_commands = [
             ["sudo", "yum", "update"],
             ["sudo", "yum", "install", "chkconfig"],
             [
@@ -78,7 +82,7 @@ def _get_linux_installation_commands(
             ["sudo", "yum", "install", "ni-daqmx"],
             ["sudo", "dkms", "autoinstall"],
         ]
-        return REDHAT_COMMANDS
+        return redhat_commands
 
     else:
         raise click.ClickException(f"Unsupported distribution '{dist_name}'")
@@ -142,7 +146,7 @@ def _get_daqmx_installed_version() -> Optional[str]:
             raise click.ClickException(
                 f"An OS error occurred while getting the installed NI-DAQmx version.\nDetails: {e}"
             ) from e
-    elif sys.platform == "linux":
+    elif sys.platform.startswith("linux"):
         try:
             _logger.debug("Checking for installed NI-DAQmx version")
             if distro.id() == "ubuntu":
@@ -158,10 +162,11 @@ def _get_daqmx_installed_version() -> Optional[str]:
             else:
                 raise click.ClickException(f"Unsupported distribution '{distro.id()}'")
             if version_match:
-                _logger.debug("Found installed NI-DAQmx version: %s", version_match.group(1))
-                return version_match.group(1)
+                installed_version = version_match.group(1)
+                _logger.info("Found installed NI-DAQmx version: %s", installed_version)
+                return installed_version
             else:
-                _logger.debug("No installed NI-DAQmx version found.")
+                _logger.info("No installed NI-DAQmx version found.")
                 return None
 
         except subprocess.CalledProcessError as e:
@@ -209,7 +214,7 @@ def _multi_access_temp_file(
 @contextlib.contextmanager
 def _multi_access_temp_folder(*, delete: bool = True) -> Generator[str, None, None]:
     """
-    Context manager for creating a temporary file.
+    Context manager for creating a temporary folder.
 
     """
     try:
@@ -226,10 +231,10 @@ def _multi_access_temp_folder(*, delete: bool = True) -> Generator[str, None, No
     finally:
         if delete:
             try:
-                _logger.debug("Deleting temp file: %s", temp_folder.name)
+                _logger.debug("Deleting temp folder: %s", temp_folder.name)
                 shutil.rmtree(temp_folder.name)
             except ValueError as e:
-                _logger.info("Failed to delete temporary file.", exc_info=True)
+                _logger.info("Failed to delete temporary folder.", exc_info=True)
                 raise click.ClickException(
                     f"Failed to delete temporary folder '{temp_folder.name}'.\nDetails: {e}"
                 ) from e
@@ -323,6 +328,10 @@ def _install_daqmx_driver_windows(download_url: str) -> None:
 
 
 def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
+    """
+    Download NI Linux Device Drivers and install NI-DAQmx on Linux OS
+
+    """
     try:
         with _multi_access_temp_file(suffix=".zip") as temp_file:
             _logger.info("Downloading Driver to %s", temp_file)
@@ -373,7 +382,6 @@ def _confirm_and_upgrade_daqmx_driver(
     latest_version: str,
     installed_version: str,
     download_url: str,
-    dist_name: Optional[str],
     release: str,
 ) -> None:
     """
@@ -418,7 +426,7 @@ def _install_daqmx_windows_driver() -> None:
 
 def _is_distribution_supported() -> None:
     """
-    Check if the distribution is supported
+    Raises an exception if the linux distribution and its version are not supported.
 
     """
     dist_name = distro.id()
@@ -427,15 +435,15 @@ def _is_distribution_supported() -> None:
     # For rhel, we only need the major version
     if dist_name == "rhel":
         dist_version = dist_version.split(".")[0]
-    _dist_name_and_version = dist_name + " " + dist_version
+    dist_name_and_version = dist_name + " " + dist_version
 
     download_url, latest_version, release, supported_os = _get_driver_details("Linux")
 
     # Check if the platform is one of the supported ones
-    if _dist_name_and_version in supported_os:
-        _logger.info(f"The platform is supported: {_dist_name_and_version}")
+    if dist_name_and_version in supported_os:
+        _logger.info(f"The platform is supported: {dist_name_and_version}")
     else:
-        raise click.ClickException(f"The platform {_dist_name_and_version} is not supported.")
+        raise click.ClickException(f"The platform {dist_name_and_version} is not supported.")
 
 
 def _install_daqmx_linux_driver() -> None:
@@ -457,7 +465,7 @@ def _install_daqmx_linux_driver() -> None:
     else:
         if installed_version and latest_version:
             _confirm_and_upgrade_daqmx_driver(
-                latest_version, installed_version, download_url, distro.id(), release
+                latest_version, installed_version, download_url, release
             )
         else:
             _install_daqmx_driver_linux(download_url, release)
@@ -472,7 +480,7 @@ def installdriver() -> None:
         if sys.platform.startswith("win"):
             _logger.info("Windows platform detected")
             _install_daqmx_windows_driver()
-        elif sys.platform == "linux":
+        elif sys.platform.startswith("linux"):
             _logger.info("Linux platform detected")
             _install_daqmx_linux_driver()
         else:
