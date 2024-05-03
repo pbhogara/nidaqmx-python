@@ -19,7 +19,7 @@ import click
 
 if sys.platform.startswith("win"):
     import winreg
-elif sys.platform == "linux":
+elif sys.platform.startswith("linux"):
     import distro
 
 _logger = logging.getLogger(__name__)
@@ -349,6 +349,7 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
                 for command in _get_linux_installation_commands(
                     _directory_to_extract_to, distro.id(), distro.version(), release
                 ):
+                    _logger.info("Running command: %s", " ".join(command))
                     subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
