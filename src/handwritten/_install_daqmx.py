@@ -359,10 +359,6 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
             )
         else:
             print("NI-DAQmx driver installed successfully.")
-            if distro.id() == "ubuntu":
-                subprocess.run(["dpkg", "-l", "ni-daqmx"], check=True)
-            elif distro.id() == "opensuse" or distro.id() == "rhel":
-                subprocess.run(["rpm", "-q", "ni-daqmx"], check=True)
 
     except subprocess.CalledProcessError as e:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
