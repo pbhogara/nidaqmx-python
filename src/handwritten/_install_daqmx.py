@@ -349,8 +349,21 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
                 for command in _get_linux_installation_commands(
                     _directory_to_extract_to, distro.id(), distro.version(), release
                 ):
-                    _logger.info("Running command: %s", " ".join(command))
+                    print("\nRunning command:", " ".join(command))
                     subprocess.run(command, check=True)
+
+        # Check if the installation was successful
+        if not _get_daqmx_installed_version():
+            raise click.ClickException(
+                "Failed to install NI-DAQmx driver. All installation commands ran successfully but the driver is not installed."
+            )
+        else:
+            print("NI-DAQmx driver installed successfully.")
+            if distro.id() == "ubuntu":
+                subprocess.run(["dpkg", "-l", "ni-daqmx"], check=True)
+            elif distro.id() == "opensuse" or distro.id() == "rhel":
+                subprocess.run(["rpm", "-q", "ni-daqmx"], check=True)
+
     except subprocess.CalledProcessError as e:
         _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
         raise click.ClickException(
