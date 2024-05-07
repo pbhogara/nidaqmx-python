@@ -242,11 +242,11 @@ def _multi_access_temp_folder(*, delete: bool = True) -> Generator[str, None, No
 
 def _load_data(
     json_data: str, platform: str
-) -> Tuple[Optional[str], Optional[str], Optional[List[str]]]:
+) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[List[str]]]:
     """
     Load data from JSON string and extract Windows metadata.
 
-    >>> _load_data('{"Windows": [{"Location": "path/to/driver", "Version": "1.0"}]}')
+    >>> _load_data('{"Windows": [{"Location": "path/to/driver", "Version": "1.0", "Release": "2024Q1"}]}')
     ('path/to/driver', '1.0')
 
     >>> _load_data('{"Windows": [{"Location": "path/to/driver"}]}')
@@ -254,7 +254,7 @@ def _load_data(
     ...
     click.exceptions.ClickException: Unable to fetch driver details.
 
-    >>> _load_data('{"Linux": [{"Location": "path/to/driver", "Version": "1.0"}]}')
+    >>> _load_data('{"Linux": [{"Location": "path/to/driver", "Version": "1.0", "Release": "2024Q1"}]}')
     Traceback (most recent call last):
     ...
     click.exceptions.ClickException: Unable to fetch driver details.
@@ -282,7 +282,9 @@ def _load_data(
     raise click.ClickException(f"Unable to fetch driver details")
 
 
-def _get_driver_details(platform: str) -> Tuple[Optional[str], Optional[str], Optional[List[str]]]:
+def _get_driver_details(
+    platform: str,
+) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[List[str]]]:
     """
     Parse the JSON data and retrieve the download link and version information.
 
@@ -332,45 +334,52 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
     Download NI Linux Device Drivers and install NI-DAQmx on Linux OS
 
     """
-    try:
-        with _multi_access_temp_file(suffix=".zip") as temp_file:
-            _logger.info("Downloading Driver to %s", temp_file)
-            urllib.request.urlretrieve(download_url, temp_file)
+    if sys.platform.startswith("linux"):
+        try:
+            with _multi_access_temp_file(suffix=".zip") as temp_file:
+                _logger.info("Downloading Driver to %s", temp_file)
+                urllib.request.urlretrieve(download_url, temp_file)
 
-            with _multi_access_temp_folder() as temp_folder:
-                _directory_to_extract_to = temp_folder
+                with _multi_access_temp_folder() as temp_folder:
+                    _directory_to_extract_to = temp_folder
 
-                _logger.info("Unzipping the downloaded file to %s", _directory_to_extract_to)
+                    _logger.info("Unzipping the downloaded file to %s", _directory_to_extract_to)
 
-                with zipfile.ZipFile(temp_file, "r") as zip_ref:
-                    zip_ref.extractall(_directory_to_extract_to)
+                    with zipfile.ZipFile(temp_file, "r") as zip_ref:
+                        zip_ref.extractall(_directory_to_extract_to)
 
-                _logger.info("Installing NI-DAQmx")
-                for command in _get_linux_installation_commands(
-                    _directory_to_extract_to, distro.id(), distro.version(), release
-                ):
-                    print("\nRunning command:", " ".join(command))
-                    subprocess.run(command, check=True)
+                    _logger.info("Installing NI-DAQmx")
+                    for command in _get_linux_installation_commands(
+                        _directory_to_extract_to, distro.id(), distro.version(), release
+                    ):
+                        print("\nRunning command:", " ".join(command))
+                        subprocess.run(command, check=True)
 
-        # Check if the installation was successful
-        if not _get_daqmx_installed_version():
+            # Check if the installation was successful
+            if not _get_daqmx_installed_version():
+                raise click.ClickException(
+                    "Failed to install NI-DAQmx driver. All installation commands ran successfully but the driver is not installed."
+                )
+            else:
+                print("NI-DAQmx driver installed successfully.")
+
+        except subprocess.CalledProcessError as e:
+            _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
             raise click.ClickException(
-                "Failed to install NI-DAQmx driver. All installation commands ran successfully but the driver is not installed."
-            )
-        else:
-            print("NI-DAQmx driver installed successfully.")
-
-    except subprocess.CalledProcessError as e:
-        _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
-        raise click.ClickException(
-            f"An error occurred while installing the NI-DAQmx driver. Command returned non-zero exit status '{e.returncode}'."
-        ) from e
-    except urllib.error.URLError as e:
-        _logger.info("Failed to download NI-DAQmx driver.", exc_info=True)
-        raise click.ClickException(f"Failed to download the NI-DAQmx driver.\nDetails: {e}") from e
-    except Exception as e:
-        _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
-        raise click.ClickException(f"Failed to install the NI-DAQmx driver.\nDetails: {e}") from e
+                f"An error occurred while installing the NI-DAQmx driver. Command returned non-zero exit status '{e.returncode}'."
+            ) from e
+        except urllib.error.URLError as e:
+            _logger.info("Failed to download NI-DAQmx driver.", exc_info=True)
+            raise click.ClickException(
+                f"Failed to download the NI-DAQmx driver.\nDetails: {e}"
+            ) from e
+        except Exception as e:
+            _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
+            raise click.ClickException(
+                f"Failed to install the NI-DAQmx driver.\nDetails: {e}"
+            ) from e
+    else:
+        raise NotImplementedError("This function is only supported on Linux.")
 
 
 def _ask_user_confirmation(user_message: str) -> bool:
@@ -412,7 +421,7 @@ def _confirm_and_upgrade_daqmx_driver(
     if is_upgrade:
         if sys.platform.startswith("win"):
             _install_daqmx_driver_windows(download_url)
-        elif sys.platform == "linux":
+        elif sys.platform.startswith("linux"):
             _install_daqmx_driver_linux(download_url, release)
 
 
@@ -425,6 +434,8 @@ def _install_daqmx_windows_driver() -> None:
     download_url, latest_version, release, supported_os = _get_driver_details("Windows")
     if not download_url:
         raise click.ClickException(f"Failed to fetch the download url.")
+    if not release:
+        raise click.ClickException(f"Failed to fetch the release version string.")
     else:
         if installed_version and latest_version:
             _confirm_and_upgrade_daqmx_driver(
@@ -439,21 +450,24 @@ def _is_distribution_supported() -> None:
     Raises an exception if the linux distribution and its version are not supported.
 
     """
-    dist_name = distro.id()
-    dist_version = distro.version()
+    if sys.platform.startswith("linux"):
+        dist_name = distro.id()
+        dist_version = distro.version()
 
-    # For rhel, we only need the major version
-    if dist_name == "rhel":
-        dist_version = dist_version.split(".")[0]
-    dist_name_and_version = dist_name + " " + dist_version
+        # For rhel, we only need the major version
+        if dist_name == "rhel":
+            dist_version = dist_version.split(".")[0]
+        dist_name_and_version = dist_name + " " + dist_version
 
-    download_url, latest_version, release, supported_os = _get_driver_details("Linux")
+        download_url, latest_version, release, supported_os = _get_driver_details("Linux")
 
-    # Check if the platform is one of the supported ones
-    if dist_name_and_version in supported_os:
-        _logger.info(f"The platform is supported: {dist_name_and_version}")
+        # Check if the platform is one of the supported ones
+        if dist_name_and_version in supported_os:
+            _logger.info(f"The platform is supported: {dist_name_and_version}")
+        else:
+            raise click.ClickException(f"The platform {dist_name_and_version} is not supported.")
     else:
-        raise click.ClickException(f"The platform {dist_name_and_version} is not supported.")
+        raise NotImplementedError("This function is only supported on Linux.")
 
 
 def _install_daqmx_linux_driver() -> None:
@@ -472,6 +486,8 @@ def _install_daqmx_linux_driver() -> None:
 
     if not download_url:
         raise click.ClickException(f"Failed to fetch the download url.")
+    if not release:
+        raise click.ClickException(f"Failed to fetch the release version string.")
     else:
         if installed_version and latest_version:
             _confirm_and_upgrade_daqmx_driver(
