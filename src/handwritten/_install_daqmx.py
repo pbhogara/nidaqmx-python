@@ -361,7 +361,7 @@ def _install_daqmx_driver_linux(download_url: str, release: str) -> None:
                     "Failed to install NI-DAQmx driver. All installation commands ran successfully but the driver is not installed."
                 )
             else:
-                print("NI-DAQmx driver installed successfully.")
+                print("NI-DAQmx driver installed successfully. Please reboot the system.")
 
         except subprocess.CalledProcessError as e:
             _logger.info("Failed to install NI-DAQmx driver.", exc_info=True)
